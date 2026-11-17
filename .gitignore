@@ -1,0 +1,17 @@
+# Proteja arquivos exportados e listas de estudantes.
+*.json
+*.jsonl
+*.csv
+*.xls
+*.xlsx
+/backups/
+/dados/
+/estudantes/
+
+# Arquivos locais do ambiente de desenvolvimento
+.env
+.env.*
+node_modules/
+__pycache__/
+.DS_Store
+Thumbs.db
