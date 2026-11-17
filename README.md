@@ -4,6 +4,8 @@
 
 Aplicação pedagógica para registrar e analisar a **autodeclaração de cor ou raça de estudantes** por turma. Funciona como página estática no GitHub Pages e também como um único arquivo HTML aberto localmente, sem instalação.
 
+**🌐 Acesse a ferramenta:** [Mini Censo Demográfico Escolar — versão online](https://mestreudk.github.io/Mini-Censo-Escolar/)
+
 ![Prévia do Mini Censo Demográfico Escolar](assets/preview.png)
 
 ## Funcionalidades
@@ -19,12 +21,12 @@ Aplicação pedagógica para registrar e analisar a **autodeclaração de cor ou
 
 ## Publicar no GitHub Pages
 
-1. Crie um repositório no GitHub (sugestão: `mini-censo-escolar`). Para uma conta GitHub Free, use um **repositório público** para publicar com Pages.
+1. Crie um repositório no GitHub (nome deste projeto: `Mini-Censo-Escolar`). Para uma conta GitHub Free, use um **repositório público** para publicar com Pages.
 2. Envie **os arquivos e pastas deste pacote descompactado** à raiz do repositório. O arquivo `index.html` deve ficar na raiz, não dentro de uma pasta extra.
 3. Vá a **Settings → Pages**.
 4. Em **Build and deployment → Source**, selecione **Deploy from a branch**.
 5. Selecione a branch **`main`** e a pasta **`/(root)`**, depois clique em **Save**.
-6. O site ficará disponível em um endereço semelhante a `https://SEU_USUARIO.github.io/mini-censo-escolar/` (ajuste para seu usuário e nome real do repositório).
+6. **Site publicado:** [https://mestreudk.github.io/Mini-Censo-Escolar/](https://mestreudk.github.io/Mini-Censo-Escolar/).
 
 Não é necessário Node.js, npm, bibliotecas externas, configuração de banco de dados nem GitHub Actions. O arquivo `.nojekyll` mantém a publicação simples, sem processamento pelo Jekyll.
 
@@ -32,7 +34,7 @@ Guia oficial: [Configurar origem de publicação do GitHub Pages](https://docs.g
 
 ## Utilizar e fazer backup
 
-1. Abra o site e cadastre as turmas ou importe um arquivo JSON anterior.
+1. Abra o [Mini Censo Demográfico Escolar](https://mestreudk.github.io/Mini-Censo-Escolar/) e cadastre as turmas ou importe um arquivo JSON anterior.
 2. Cadastre/edite os estudantes e selecione a resposta autodeclarada, ou **Pendente de autodeclaração**.
 3. Selecione uma turma para consultar os indicadores e o gráfico.
 4. Use **Salvar gráfico PNG** para exportar a visualização agregada.
@@ -60,7 +62,7 @@ Guia oficial: [Configurar origem de publicação do GitHub Pages](https://docs.g
 ## Estrutura do repositório
 
 ```text
-mini-censo-escolar/
+Mini-Censo-Escolar/
 ├── index.html          # Aplicação estática completa (HTML + CSS + JS)
 ├── assets/
 │   └── preview.png     # Captura de tela ilustrativa, sem dados reais
