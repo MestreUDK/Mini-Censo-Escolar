@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#162d58">
+  <meta name="description" content="Ferramenta de censo demográfico escolar com turmas e categorias personalizáveis, gráficos de pizza e backup JSON. Também pode ser salva para uso offline.">
+  <meta name="author" content="Vinícius Oliveira Moraes">
+  <meta name="application-name" content="Mini Censo Demográfico Escolar">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Mini Censo Demográfico Escolar">
+  <meta property="og:description" content="Cadastro e análise de autodeclarações de cor ou raça por turma, com funcionamento local e exportação de resultados.">
+  <meta name="color-scheme" content="light">
+  <title>Mini Censo Demográfico Escolar v3.0</title>
+  <style>
+    :root {
+      --navy: #162d58; --navy2: #244377; --blue: #315cbd; --blueLight: #e9efff;
+      --bg: #f3f6fb; --surface: #ffffff; --ink: #1c2a43; --muted: #68758b;
+      --line: #dee5f0; --success: #117c6c; --danger: #b93c4d;
+      --radius: 19px; --shadow: 0 12px 36px rgba(25,48,87,.065);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin:0; color:var(--ink); background:var(--bg); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.5; }
+    button, input, select { font:inherit; }
+    button { cursor:pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid #a8c2ff; outline-offset:2px; }
+    .topbar { background:linear-gradient(125deg,#14284f 0%,#1d3c70 68%,#315d9e 100%); color:white; padding:31px 20px 38px; }
+    .topbar-inner { max-width:1170px; margin:auto; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+    .brandmark { width:52px; height:52px; flex:0 0 52px; display:grid; place-items:center; border:1px solid #8daee770; border-radius:15px; background:#ffffff16; font-size:27px; }
+    .brand { display:flex; align-items:center; gap:15px; }
+    h1 { font-size:clamp(1.35rem,3vw,1.95rem); margin:0; line-height:1.2; letter-spacing:-.035em; }
+    .subtitle { margin:6px 0 0; color:#d1def6; font-size:.92rem; }
+    .head-actions, .actions { display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+    .button { border:1px solid transparent; padding:11px 16px; border-radius:11px; display:inline-flex; justify-content:center; align-items:center; gap:7px; line-height:1.2; font-weight:700; font-size:.89rem; transition:background .15s,transform .15s,border-color .15s; text-decoration:none; }
+    .button:hover { transform:translateY(-1px); }
+    .button:active { transform:translateY(0); }
+    .button-primary { background:var(--blue); color:#fff; }
+    .button-primary:hover { background:#254caa; }
+    .button-outline-white { border-color:#8ba6d070; background:#ffffff14; color:#fff; }
+    .button-outline-white:hover { background:#ffffff2b; }
+    .button-secondary { border-color:var(--line); color:var(--navy); background:white; }
+    .button-secondary:hover { background:#f6f8fd; }
+    .button-danger { border:1px solid #f2ccd0; background:#fff3f4; color:var(--danger); }
+    .button-danger:hover { background:#ffe5e9; }
+    .button:disabled { cursor:not-allowed; opacity:.45; transform:none; }
+    .container { max-width:1170px; margin:-14px auto 0; padding:0 20px 34px; position:relative; }
+    .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:13px; margin-bottom:18px; }
+    .stat { background:var(--surface); padding:19px 21px; border-radius:15px; box-shadow:var(--shadow); border:1px solid #eaf0f8; }
+    .stat-label { color:var(--muted); font-size:.86rem; font-weight:600; }
+    .stat-value { font-size:clamp(1.55rem,3.8vw,2.1rem); font-weight:800; letter-spacing:-.035em; line-height:1.2; margin-top:5px; font-variant-numeric:tabular-nums; }
+    .stat-foot { color:#8190a7; font-size:.75rem; margin-top:5px; }
+    .workspace { display:grid; grid-template-columns:minmax(300px,.85fr) minmax(0,1.15fr); gap:18px; align-items:start; }
+    .card { background:var(--surface); border-radius:var(--radius); border:1px solid #e5ecf5; box-shadow:var(--shadow); overflow:hidden; }
+    .card-content { padding:25px; }
+    .section-title { font-size:1.16rem; line-height:1.3; letter-spacing:-.025em; font-weight:800; margin:0; }
+    .section-description { color:var(--muted); font-size:.86rem; margin:8px 0 20px; }
+    .field { margin-bottom:18px; }
+    label { display:block; font-weight:700; font-size:.85rem; margin-bottom:7px; }
+    .required { color:var(--danger); }
+    input[type=text], select { width:100%; min-height:45px; padding:11px 12px; background:#fff; color:var(--ink); border:1px solid #ccd7e7; border-radius:10px; }
+    input[type=text]::placeholder { color:#9ca7b7; }
+    .hint { font-size:.76rem; margin:8px 0 0; color:#8490a3; }
+    .category-add-line { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-top:9px; }
+    .category-add-line .hint { margin:0; flex:1 1 180px; }
+    .link-button { border:0; padding:5px 0; color:var(--blue); background:transparent; font-weight:800; font-size:.83rem; }
+    .link-button:hover { text-decoration:underline; }
+    .new-category-panel { margin-top:13px; border-radius:12px; background:#f4f7fd; border:1px solid #dce6f6; padding:16px; }
+    .new-category-panel .panel-heading { margin:0 0 12px; font-weight:800; color:var(--navy); font-size:.9rem; }
+    .new-category-fields { display:grid; grid-template-columns:minmax(0,1fr) 75px; align-items:end; gap:12px; }
+    .new-category-fields label { margin-bottom:6px; }
+    input[type=color] { width:100%; height:45px; padding:3px; border:1px solid #ccd7e7; border-radius:10px; cursor:pointer; background:#fff; }
+    .new-category-panel .actions { margin-top:13px; }
+    .category-manager { margin-top:19px; padding-top:14px; border-top:1px solid var(--line); }
+    .category-manager summary { cursor:pointer; color:var(--navy2); font-weight:800; font-size:.84rem; }
+    .category-manager summary::marker { color:var(--blue); }
+    .category-manager .manager-hint { font-size:.76rem; color:var(--muted); margin:9px 0 13px; }
+    .custom-list { display:flex; flex-direction:column; gap:8px; }
+    .custom-item { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; background:#f7f9fd; border:1px solid #e6edf6; border-radius:11px; padding:10px 12px; }
+    .custom-item .custom-name { flex:1; min-width:130px; overflow-wrap:anywhere; font-weight:700; font-size:.84rem; }
+    .custom-item .custom-actions { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+    .custom-item input[type=color] { width:36px; height:32px; border-radius:7px; }
+    .custom-item .icon-button { padding:6px 8px; font-size:.73rem; }
+    .custom-empty { color:var(--muted); font-size:.8rem; margin:0; }
+    #salvarBtn { flex:1; min-width:165px; }
+    .info-inline { background:#f1f6ff; border:1px solid #dfebff; padding:13px 14px; color:#426084; border-radius:11px; font-size:.8rem; margin-top:20px; }
+    .chart-head { display:flex; justify-content:space-between; align-items:start; gap:12px; flex-wrap:wrap; }
+    .chart-head > div:first-child { flex:1; }
+    .filter-wrap { min-width:170px; max-width:220px; width:40%; }
+    .filter-wrap label { font-size:.75rem; margin-bottom:5px; color:var(--muted); }
+    .filter-wrap select { min-height:41px; padding:8px 10px; }
+    .chart-body { display:grid; grid-template-columns:minmax(210px,1fr) minmax(175px,.8fr); align-items:center; gap:8px; margin-top:7px; }
+    .chart-wrap { position:relative; width:100%; max-width:390px; margin:auto; }
+    #pizzaCanvas { width:100%; height:auto; aspect-ratio:1; display:block; }
+    .legend { display:flex; flex-direction:column; gap:10px; padding:15px 0; }
+    .legend-item { display:grid; grid-template-columns:11px minmax(0,1fr) auto; align-items:center; column-gap:9px; font-size:.83rem; }
+    .legend-item .dot { width:10px; height:10px; border-radius:4px; }
+    .legend-name { min-width:0; }
+    .legend-value { font-weight:800; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .legend-value small { color:var(--muted); font-weight:500; margin-left:4px; }
+    .legend-item.zero { opacity:.47; }
+    .chart-footer { margin-top:4px; border-top:1px solid var(--line); padding-top:16px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .chart-total { color:var(--muted); font-size:.86rem; }
+    .chart-total strong { color:var(--ink); }
+    .records-card { margin-top:18px; }
+    .records-header { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:center; margin-bottom:20px; }
+    .search-wrap { width:100%; max-width:310px; }
+    .search-wrap input { min-height:42px; }
+    .table-scroll { overflow:auto; border:1px solid var(--line); border-radius:12px; }
+    table { width:100%; border-collapse:collapse; font-size:.89rem; text-align:left; }
+    th { padding:13px 15px; white-space:nowrap; color:#64748b; background:#f7f9fd; font-size:.75rem; text-transform:uppercase; letter-spacing:.045em; }
+    td { padding:14px 15px; border-top:1px solid #edf1f7; }
+    td.name-cell { font-weight:700; }
+    .race-pill { display:inline-flex; align-items:center; gap:8px; padding:5px 9px; background:#f4f6fb; border-radius:25px; white-space:nowrap; font-size:.81rem; }
+    .race-pill::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--race-color); }
+    .row-actions { display:flex; gap:6px; justify-content:flex-end; }
+    .icon-button { border:1px solid var(--line); background:white; border-radius:8px; padding:7px 11px; font-size:.79rem; color:var(--navy2); font-weight:700; }
+    .icon-button:hover { background:#f0f4fb; }
+    .icon-button.delete { color:var(--danger); }
+    .empty-cell { text-align:center; padding:36px 15px; color:var(--muted); }
+    .table-footer { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:15px; color:var(--muted); font-size:.82rem; }
+    .privacy { margin-top:18px; padding:17px 20px; border:1px solid #e0e8f3; border-radius:14px; background:#ebf1fa; display:flex; align-items:flex-start; gap:12px; color:#53647f; font-size:.82rem; }
+    .privacy strong { color:var(--navy); }
+    footer { text-align:center; margin-top:21px; color:#8290a5; font-size:.75rem; }
+    .toast { position:fixed; bottom:22px; left:50%; transform:translate(-50%,18px); max-width:min(470px,calc(100% - 32px)); border-radius:12px; padding:12px 18px; background:#183357; color:#fff; box-shadow:0 10px 35px #12264e38; text-align:center; z-index:9; pointer-events:none; opacity:0; transition:opacity .2s,transform .2s; font-size:.87rem; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    .toast.error { background:#a8293d; }
+    .hide { display:none !important; }
+    @media (max-width:950px) { .workspace { grid-template-columns:1fr; } .chart-wrap { max-width:330px; } .chart-body { grid-template-columns:1fr minmax(185px,.9fr); } }
+    @media (max-width:620px) { .stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .topbar { padding:24px 16px 33px; } .topbar-inner { align-items:stretch; } .topbar .head-actions { width:100%; } .head-actions .button { flex:1; } .container { padding:0 12px 25px; } .stats { gap:9px; } .stat { padding:14px 12px; } .stat-label { font-size:.7rem; } .stat-foot { font-size:.67rem; } .card-content { padding:19px 16px; } .chart-body { grid-template-columns:1fr; } .chart-wrap { width:min(300px,90%); } .legend { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 14px; } .legend-item { grid-template-columns:10px minmax(0,1fr); row-gap:3px; font-size:.78rem; } .legend-value { grid-column:2; } .filter-wrap { width:100%; max-width:none; } .chart-head { flex-direction:column; } .records-header .search-wrap { max-width:none; } .table-footer .button { width:100%; } .privacy { padding:14px; } }
+    @media (prefers-reduced-motion:reduce) { *, *::before, *::after { scroll-behavior:auto !important; transition:none !important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brandmark" aria-hidden="true">◔</div>
+        <div>
+          <h1>Mini Censo Demográfico Escolar</h1>
+          <p class="subtitle">Autodeclaração de cor ou raça • Registro e análise por turma</p>
+        </div>
+      </div>
+      <div class="head-actions">
+        <button type="button" class="button button-outline-white" id="exportarJsonBtn">↓ Exportar JSON</button>
+        <button type="button" class="button button-outline-white" id="importarJsonBtn">↑ Importar JSON</button>
+        <a class="button button-outline-white" href="./index.html" download="Mini_Censo_Demografico_Escolar_v3.html" title="Salvar uma cópia independente para usar sem internet">↓ HTML offline</a>
+        <input type="file" id="arquivoJson" class="hide" accept=".json,application/json" aria-label="Selecionar arquivo JSON para importação">
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="stats" aria-label="Indicadores do censo">
+      <article class="stat"><div class="stat-label">Alunos cadastrados</div><div id="totalAlunos" class="stat-value">0</div><div class="stat-foot">Total de registros</div></article>
+      <article class="stat"><div class="stat-label">Turmas registradas</div><div id="totalTurmas" class="stat-value">0</div><div class="stat-foot">Turmas disponíveis para cadastro</div></article>
+      <article class="stat"><div class="stat-label">Autodeclarações</div><div id="totalDeclarados" class="stat-value">0</div><div class="stat-foot">Exclui “Prefiro não informar” e pendentes</div></article>
+      <article class="stat"><div class="stat-label">Aguardando resposta</div><div id="totalPendentes" class="stat-value">0</div><div class="stat-foot">Alunos ainda não entrevistados</div></article>
+    </div>
+
+    <div class="workspace">
+      <section class="card" aria-labelledby="formTitle">
+        <div class="card-content">
+          <h2 class="section-title" id="formTitle">Cadastrar estudante</h2>
+          <p class="section-description">Adicione as respostas individualmente. Você poderá editar ou excluir os registros depois.</p>
+          <form id="cadastroForm" autocomplete="off">
+            <div class="field">
+              <label for="nome">Nome do estudante <span class="required">*</span></label>
+              <input type="text" id="nome" required maxlength="120" placeholder="Ex.: Maria da Silva" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="turma">Turma <span class="required">*</span></label>
+              <select id="turma" required><option value="" disabled selected>Selecione uma turma</option></select>
+              <div class="category-add-line">
+                <p class="hint">Escolha uma turma da lista. Se não aparecer, cadastre-a primeiro.</p>
+                <button class="link-button" id="abrirTurmaBtn" type="button" aria-expanded="false" aria-controls="novaTurmaPanel">＋ Cadastrar turma</button>
+              </div>
+              <div class="new-category-panel hide" id="novaTurmaPanel">
+                <p class="panel-heading">Cadastrar turma</p>
+                <label for="novaTurmaNome">Nome da turma</label>
+                <input type="text" id="novaTurmaNome" maxlength="65" placeholder="Ex.: 6º Ano A" autocomplete="off">
+                <div class="actions">
+                  <button class="button button-primary" type="button" id="salvarTurmaBtn">Adicionar turma</button>
+                  <button class="button button-secondary" type="button" id="cancelarTurmaBtn">Cancelar</button>
+                </div>
+              </div>
+              <details class="category-manager" id="gerenciarTurmas">
+                <summary>Gerenciar turmas <span id="contadorTurmas">(0)</span></summary>
+                <p class="manager-hint">Renomeie turmas sem perder os alunos já cadastrados ou exclua turmas vazias.</p>
+                <div class="custom-list" id="listaTurmasCadastradas"></div>
+              </details>
+            </div>
+            <div class="field">
+              <label for="cor">Cor ou raça autodeclarada <span class="required">*</span></label>
+              <select id="cor" required><option value="" disabled selected>Selecione a resposta</option></select>
+              <div class="category-add-line">
+                <p class="hint">Não encontrou a resposta do estudante?</p>
+                <button class="link-button" id="abrirCategoriaBtn" type="button" aria-expanded="false" aria-controls="novaCategoriaPanel">＋ Criar nova categoria</button>
+              </div>
+              <div class="new-category-panel hide" id="novaCategoriaPanel">
+                <p class="panel-heading">Adicionar opção de autodeclaração</p>
+                <div class="new-category-fields">
+                  <div><label for="novaCategoriaNome">Nome da categoria</label><input type="text" id="novaCategoriaNome" maxlength="55" placeholder="Ex.: Morena, Quilombola..." autocomplete="off"></div>
+                  <div><label for="novaCategoriaCor">Cor do gráfico</label><input type="color" id="novaCategoriaCor" value="#D05B91" aria-label="Cor da nova categoria no gráfico"></div>
+                </div>
+                <div class="actions">
+                  <button class="button button-primary" type="button" id="salvarCategoriaBtn">Adicionar opção</button>
+                  <button class="button button-secondary" type="button" id="cancelarCategoriaBtn">Cancelar</button>
+                </div>
+              </div>
+              <p class="hint">As cinco categorias iniciais de cor ou raça correspondem à classificação do IBGE. Opções criadas por você são complementares e não equivalem automaticamente a essa classificação.</p>
+              <details class="category-manager" id="gerenciarCategorias">
+                <summary>Gerenciar categorias personalizadas <span id="contadorCategorias">(0)</span></summary>
+                <p class="manager-hint">Renomeie, altere a cor do gráfico ou exclua opções sem estudantes vinculados.</p>
+                <div class="custom-list" id="listaCategoriasPersonalizadas"></div>
+              </details>
+            </div>
+            <div class="actions">
+              <button class="button button-primary" id="salvarBtn" type="submit">+ Adicionar estudante</button>
+              <button class="button button-secondary hide" id="cancelarEdicao" type="button">Cancelar</button>
+            </div>
+          </form>
+          <div class="info-inline">🔒 Os registros são armazenados somente neste navegador e não são enviados a um servidor pela ferramenta. Ao usar o GitHub Pages, é preciso internet para abrir a página; para trabalhar completamente offline, use o botão “HTML offline”. Os dados do site e do arquivo offline não são sincronizados. Exporte seu JSON para fazer backup ou transferir dados.</div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="chartTitle">
+        <div class="card-content">
+          <div class="chart-head">
+            <div>
+              <h2 class="section-title" id="chartTitle">Distribuição das respostas</h2>
+              <p class="section-description">Gráfico atualizado com as respostas coletadas. Alunos pendentes não entram nos percentuais.</p>
+            </div>
+            <div class="filter-wrap">
+              <label for="filtroTurma">Visualizar turma</label>
+              <select id="filtroTurma"><option value="">Todas as turmas</option></select>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div class="chart-wrap"><canvas id="pizzaCanvas" width="580" height="580" role="img" aria-label="Gráfico de pizza da distribuição de cor ou raça dos estudantes"></canvas></div>
+            <div class="legend" id="legenda" aria-label="Legenda do gráfico"></div>
+          </div>
+          <div class="chart-footer">
+            <div class="chart-total" id="resumoGrafico">Total analisado: <strong>0 estudantes</strong></div>
+            <button class="button button-primary" type="button" id="salvarPngBtn">↓ Salvar gráfico PNG</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card records-card" aria-labelledby="recordsTitle">
+      <div class="card-content">
+        <div class="records-header">
+          <div>
+            <h2 class="section-title" id="recordsTitle">Registros de estudantes</h2>
+            <p class="section-description" style="margin-bottom:0">Consulte, corrija e gerencie as respostas cadastradas.</p>
+          </div>
+          <div class="search-wrap"><label for="busca">Buscar estudante</label><input type="text" id="busca" placeholder="Pesquisar por nome ou turma"></div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th scope="col">Estudante</th><th scope="col">Turma</th><th scope="col">Autodeclaração</th><th scope="col" style="text-align:right">Ações</th></tr></thead>
+            <tbody id="tabelaAlunos"><tr><td colspan="4" class="empty-cell">Nenhum estudante cadastrado ainda.</td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="contagemTabela">0 registros</span><button class="button button-danger" id="limparDadosBtn" type="button">Excluir todos os registros</button></div>
+      </div>
+    </section>
+
+    <aside class="privacy"><span aria-hidden="true" style="font-size:1.3rem">ⓘ</span><div><strong>Privacidade e cuidado com os dados:</strong> nome e autodeclaração de cor ou raça são dados pessoais, e informações raciais são sensíveis pela LGPD. Use somente com finalidade pedagógica autorizada, evite computadores compartilhados e não divulgue o arquivo JSON com nomes. O PNG contém apenas números e percentuais, sem identificação individual.</div></aside>
+    <footer>
+      Mini Censo Demográfico Escolar • Versão 3.0 • Ferramenta offline de uso pedagógico
+      <div style="margin-top:6px; font-weight:600; color:#53647f;">Desenvolvido por Vinícius Oliveira Moraes © 2026</div>
+    </footer>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    'use strict';
+    (() => {
+      const STORAGE_KEY = 'mini_censo_demografico_escolar_v1';
+      const CATEGORIAS_PADRAO = [
+        { id: 'branca', nome: 'Branca', cor: '#437BD7' },
+        { id: 'preta', nome: 'Preta', cor: '#8066C2' },
+        { id: 'parda', nome: 'Parda', cor: '#D48B45' },
+        { id: 'amarela', nome: 'Amarela', cor: '#DABB3E' },
+        { id: 'indigena', nome: 'Indígena', cor: '#319B83' },
+        { id: 'nao_informar', nome: 'Prefiro não informar', cor: '#A2ABB9' },
+        { id: 'pendente', nome: 'Pendente de autodeclaração', cor: '#94A3B8' }
+      ];
+      const CORES_ADICIONAIS = ['#D05B91','#39A9AB','#B27CE8','#CD733E','#5577B7','#77A94F','#D35B65','#9E7A51','#7A9EBC','#9B61AC'];
+      const el = id => document.getElementById(id);
+      const form = el('cadastroForm');
+      const canvas = el('pizzaCanvas');
+      let categorias = CATEGORIAS_PADRAO.map(c => ({...c}));
+      let porId = Object.fromEntries(categorias.map(c => [c.id,c]));
+      let turmasCadastradas = [];
+      let alunos = carregarLocal();
+      let editando = null;
+      let turmaSelecionada = '';
+      let busca = '';
+      let toastTimeout;
+
+      function novaId() {
+        return (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+          ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
+      function textoNormalizado(valor, limite = 120) {
+        return (typeof valor === 'string' ? valor : '').trim().replace(/\s+/g, ' ').slice(0, limite);
+      }
+      function chaveTexto(valor) {
+        return textoNormalizado(valor).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+      }
+      function ehCorHex(cor) { return typeof cor === 'string' && /^#[0-9a-f]{6}$/i.test(cor); }
+      function nomeDisponivel(nome, ignorarId = '') {
+        return !categorias.some(c => c.id !== ignorarId && chaveTexto(c.nome) === chaveTexto(nome));
+      }
+      function normalizarCategorias(categoriasArquivo) {
+        const resultado = CATEGORIAS_PADRAO.map(c => ({...c}));
+        const ids = new Set(resultado.map(c => c.id));
+        const nomes = new Set(resultado.map(c => chaveTexto(c.nome)));
+        if (!Array.isArray(categoriasArquivo)) return resultado;
+        for (const cat of categoriasArquivo) {
+          if (!cat || typeof cat !== 'object') continue;
+          if (typeof cat.id !== 'string' || !/^[a-z0-9_-]{1,120}$/i.test(cat.id)) continue;
+          const nome = textoNormalizado(cat.nome,55);
+          if (!nome || !ehCorHex(cat.cor) || ids.has(cat.id) || nomes.has(chaveTexto(nome))) continue;
+          resultado.push({ id:cat.id,nome,cor:cat.cor });
+          ids.add(cat.id); nomes.add(chaveTexto(nome));
+        }
+        return resultado;
+      }
+      function registroValido(r, mapa = porId) {
+        if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
+        const nome = textoNormalizado(r.nome);
+        const turma = textoNormalizado(r.turma,65);
+        if (!nome || !turma || typeof r.cor !== 'string' || !Object.prototype.hasOwnProperty.call(mapa,r.cor)) return null;
+        return {id: typeof r.id === 'string' && r.id.length <= 120 && r.id ? r.id : novaId(), nome, turma, cor:r.cor};
+      }
+      function normalizarTurmas(turmasArquivo, registros = []) {
+        const unicas = new Map();
+        const inserir = valor => {
+          const nome = textoNormalizado(valor,65);
+          if (nome && !unicas.has(chaveTexto(nome))) unicas.set(chaveTexto(nome),nome);
+        };
+        if (Array.isArray(turmasArquivo)) turmasArquivo.forEach(inserir);
+        for (const registro of registros) if (registro && typeof registro === 'object') inserir(registro.turma);
+        return [...unicas.values()].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true}));
+      }
+      function carregarLocal() {
+        try {
+          const dado = JSON.parse(localStorage.getItem('mini_censo_demografico_escolar_v1') || 'null');
+          categorias = normalizarCategorias(dado?.categorias);
+          porId = Object.fromEntries(categorias.map(c=>[c.id,c]));
+          const lista = Array.isArray(dado) ? dado : dado?.alunos;
+          if (!Array.isArray(lista)) {
+            turmasCadastradas = normalizarTurmas(dado?.turmas);
+            return [];
+          }
+          const unicos = new Set();
+          const registros = lista.map(r=>registroValido(r,porId)).filter(r=>{
+            if (!r) return false;
+            while (unicos.has(r.id)) r.id=novaId();
+            unicos.add(r.id); return true;
+          });
+          // Migração automática: JSONs antigos não tinham cadastro independente de turmas.
+          turmasCadastradas = normalizarTurmas(dado?.turmas,registros);
+          for (const r of registros) r.turma = turmasCadastradas.find(t=>chaveTexto(t)===chaveTexto(r.turma)) || r.turma;
+          return registros;
+        } catch (e) {
+          categorias = CATEGORIAS_PADRAO.map(c=>({...c}));
+          porId = Object.fromEntries(categorias.map(c=>[c.id,c]));
+          turmasCadastradas = [];
+          return [];
+        }
+      }
+      function persistir() {
+        try {
+          localStorage.setItem('mini_censo_demografico_escolar_v1',JSON.stringify({versao:3,categorias,turmas:turmasCadastradas,alunos}));
+          return true;
+        } catch (e) {
+          aviso('Não foi possível salvar no navegador. Exporte um JSON para não perder os dados.',true);
+          return false;
+        }
+      }
+      function atualizarMapaCategorias() { porId = Object.fromEntries(categorias.map(c=>[c.id,c])); }
+      function atualizarOpcoesCategoria() {
+        const campo=el('cor'), antes=campo.value;
+        campo.replaceChildren(new Option('Selecione a resposta',''));
+        campo.options[0].disabled=true;
+        for (const cat of categorias) campo.add(new Option(cat.nome,cat.id));
+        campo.value = Object.prototype.hasOwnProperty.call(porId,antes) ? antes : '';
+        atualizarGerenciadorCategorias();
+      }
+      function atualizarGerenciadorCategorias() {
+        const personalizadas=categorias.slice(CATEGORIAS_PADRAO.length);
+        el('contadorCategorias').textContent = `(${personalizadas.length})`;
+        const lista=el('listaCategoriasPersonalizadas'); lista.replaceChildren();
+        if (!personalizadas.length) {
+          const vazio=document.createElement('p'); vazio.className='custom-empty';
+          vazio.textContent='Nenhuma categoria personalizada ainda.'; lista.append(vazio); return;
+        }
+        for (const cat of personalizadas) {
+          const linha=document.createElement('div'); linha.className='custom-item';
+          const nome=document.createElement('span'); nome.className='custom-name';
+          const uso=alunos.filter(a=>a.cor===cat.id).length;
+          nome.textContent=`${cat.nome} · ${uso} ${uso===1 ? 'aluno':'alunos'}`;
+          const botoes=document.createElement('div'); botoes.className='custom-actions';
+          const cor=document.createElement('input'); cor.type='color'; cor.value=cat.cor;
+          cor.setAttribute('aria-label',`Cor da categoria ${cat.nome}`);
+          cor.addEventListener('change',()=>{
+            cat.cor=cor.value; persistir(); atualizarGrafico(); atualizarTabela();
+            aviso(`Cor de “${cat.nome}” atualizada.`);
+          });
+          botoes.append(cor);
+          botoes.append(botaoAcao('Renomear','',`Renomear ${cat.nome}`,()=>{
+            const entrada=prompt('Novo nome para esta categoria:',cat.nome);
+            if (entrada===null) return;
+            const novo=textoNormalizado(entrada,55);
+            if (!novo) return aviso('Digite um nome para a categoria.',true);
+            if (!nomeDisponivel(novo,cat.id)) return aviso('Já existe uma categoria com este nome.',true);
+            cat.nome=novo; persistir(); renderizar(); aviso('Categoria renomeada. Registros preservados.');
+          }));
+          const remover=botaoAcao('Excluir','delete',`Excluir categoria ${cat.nome}`,()=>{
+            if (alunos.some(a=>a.cor===cat.id)) return aviso('Categoria em uso. Altere primeiro a autodeclaração dos estudantes associados.',true);
+            if (!confirm(`Excluir a opção “${cat.nome}”?`)) return;
+            categorias=categorias.filter(c=>c.id!==cat.id);
+            atualizarMapaCategorias(); persistir(); renderizar(); aviso('Categoria excluída.');
+          });
+          if (uso) remover.title='Altere antes a categoria dos estudantes vinculados';
+          botoes.append(remover); linha.append(nome,botoes); lista.append(linha);
+        }
+      }
+      function mostrarFormCategoria(mostrar) {
+        el('novaCategoriaPanel').classList.toggle('hide',!mostrar);
+        el('abrirCategoriaBtn').setAttribute('aria-expanded',String(mostrar));
+        if (mostrar) {
+          el('novaCategoriaCor').value=CORES_ADICIONAIS[(categorias.length-CATEGORIAS_PADRAO.length)%CORES_ADICIONAIS.length];
+          el('novaCategoriaNome').focus();
+        } else el('novaCategoriaNome').value='';
+      }
+      function adicionarCategoria() {
+        const nome=textoNormalizado(el('novaCategoriaNome').value,55);
+        if (!nome) return aviso('Digite o nome da nova categoria.',true);
+        if (!nomeDisponivel(nome)) return aviso('Já existe uma categoria com este nome.',true);
+        const cor=el('novaCategoriaCor').value;
+        if (!ehCorHex(cor)) return aviso('Selecione uma cor válida para o gráfico.',true);
+        let id;
+        do { id='custom_'+novaId().replace(/[^a-z0-9]/gi,'').slice(0,50).toLowerCase(); }
+        while (Object.prototype.hasOwnProperty.call(porId,id));
+        categorias.push({id,nome,cor}); atualizarMapaCategorias();
+        persistir(); mostrarFormCategoria(false); renderizar();
+        el('cor').value=id;
+        aviso(`Categoria “${nome}” adicionada e selecionada.`);
+      }
+      el('abrirCategoriaBtn').addEventListener('click',()=>mostrarFormCategoria(el('novaCategoriaPanel').classList.contains('hide')));
+      el('cancelarCategoriaBtn').addEventListener('click',()=>mostrarFormCategoria(false));
+      el('salvarCategoriaBtn').addEventListener('click',adicionarCategoria);
+      el('novaCategoriaNome').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();adicionarCategoria();}});
+
+      function aviso(texto, erro = false) {
+        const toast = el('toast');
+        toast.textContent = texto;
+        toast.className = `toast show${erro ? ' error' : ''}`;
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toast.classList.remove('show'), 4200);
+      }
+      function listaTurmas() {
+        return [...turmasCadastradas].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true}));
+      }
+      function atualizarGerenciadorTurmas() {
+        const lista = el('listaTurmasCadastradas');
+        lista.replaceChildren();
+        el('contadorTurmas').textContent = `(${turmasCadastradas.length})`;
+        if (!turmasCadastradas.length) {
+          const vazio=document.createElement('p'); vazio.className='custom-empty';
+          vazio.textContent='Nenhuma turma cadastrada. Use “＋ Cadastrar turma” acima.';
+          lista.append(vazio); return;
+        }
+        for (const turma of listaTurmas()) {
+          const linha=document.createElement('div'); linha.className='custom-item';
+          const nome=document.createElement('span'); nome.className='custom-name';
+          const uso=alunos.filter(a=>chaveTexto(a.turma)===chaveTexto(turma)).length;
+          nome.textContent=`${turma} · ${uso} ${uso===1 ? 'aluno':'alunos'}`;
+          const botoes=document.createElement('div'); botoes.className='custom-actions';
+          botoes.append(botaoAcao('Renomear','',`Renomear turma ${turma}`,()=>{
+            const entrada=prompt('Novo nome para a turma:',turma);
+            if (entrada===null) return;
+            const novo=textoNormalizado(entrada,65);
+            if (!novo) return aviso('Digite um nome para a turma.',true);
+            if (turmasCadastradas.some(t=>t!==turma && chaveTexto(t)===chaveTexto(novo))) return aviso('Já existe uma turma com este nome.',true);
+            turmasCadastradas=turmasCadastradas.map(t=>t===turma?novo:t);
+            for (const aluno of alunos) if (chaveTexto(aluno.turma)===chaveTexto(turma)) aluno.turma=novo;
+            if (chaveTexto(turmaSelecionada)===chaveTexto(turma)) turmaSelecionada=novo;
+            const turmaSelecionadaNoCadastro=el('turma').value===turma;
+            persistir(); renderizar();
+            if (turmaSelecionadaNoCadastro) el('turma').value=novo;
+            aviso(`Turma renomeada para “${novo}”. ${uso} registro(s) preservado(s).`);
+          }));
+          const remover=botaoAcao('Excluir','delete',`Excluir turma ${turma}`,()=>{
+            if (uso) return aviso('Esta turma possui alunos vinculados. Transfira ou exclua os registros primeiro.',true);
+            if (!confirm(`Excluir a turma “${turma}”?`)) return;
+            turmasCadastradas=turmasCadastradas.filter(t=>t!==turma);
+            persistir(); renderizar(); aviso('Turma excluída.');
+          });
+          if (uso) remover.title='Antes, altere a turma dos alunos vinculados';
+          botoes.append(remover); linha.append(nome,botoes); lista.append(linha);
+        }
+      }
+      function mostrarFormTurma(mostrar) {
+        el('novaTurmaPanel').classList.toggle('hide',!mostrar);
+        el('abrirTurmaBtn').setAttribute('aria-expanded',String(mostrar));
+        if (mostrar) el('novaTurmaNome').focus();
+        else el('novaTurmaNome').value='';
+      }
+      function adicionarTurma() {
+        const nome=textoNormalizado(el('novaTurmaNome').value,65);
+        if (!nome) return aviso('Digite o nome da turma.',true);
+        if (turmasCadastradas.some(t=>chaveTexto(t)===chaveTexto(nome))) return aviso('Esta turma já está cadastrada.',true);
+        turmasCadastradas.push(nome);
+        persistir(); mostrarFormTurma(false); renderizar();
+        el('turma').value=nome;
+        aviso(`Turma “${nome}” cadastrada e selecionada.`);
+      }
+      el('abrirTurmaBtn').addEventListener('click',()=>mostrarFormTurma(el('novaTurmaPanel').classList.contains('hide')));
+      el('cancelarTurmaBtn').addEventListener('click',()=>mostrarFormTurma(false));
+      el('salvarTurmaBtn').addEventListener('click',adicionarTurma);
+      el('novaTurmaNome').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();adicionarTurma();}});
+
+      function atualizarFiltros() {
+        const turmas = listaTurmas();
+        const filtro = el('filtroTurma');
+        const seletor = el('turma');
+        const selecionadaAntes = seletor.value;
+        if (turmaSelecionada && !turmas.some(t=>chaveTexto(t)===chaveTexto(turmaSelecionada))) turmaSelecionada='';
+        filtro.replaceChildren(new Option('Todas as turmas', ''));
+        seletor.replaceChildren(new Option('Selecione uma turma', ''));
+        seletor.options[0].disabled=true;
+        for (const turma of turmas) {
+          filtro.add(new Option(turma,turma));
+          seletor.add(new Option(turma,turma));
+        }
+        filtro.value=turmas.find(t=>chaveTexto(t)===chaveTexto(turmaSelecionada)) || '';
+        seletor.value=turmas.find(t=>chaveTexto(t)===chaveTexto(selecionadaAntes)) || '';
+        atualizarGerenciadorTurmas();
+      }
+      function filtradosPorTurma() {
+        return turmaSelecionada ? alunos.filter(a => chaveTexto(a.turma) === chaveTexto(turmaSelecionada)) : alunos;
+      }
+      function contagens(lista) {
+        const retorno = Object.fromEntries(categorias.map(c => [c.id, 0]));
+        for (const a of lista) retorno[a.cor]++;
+        return retorno;
+      }
+      function formatarNumero(n) { return new Intl.NumberFormat('pt-BR').format(n); }
+      function percentual(n, total) { return total ? 100 * n / total : 0; }
+      function formatoPercentual(n) { return `${n.toLocaleString('pt-BR', {maximumFractionDigits:1, minimumFractionDigits:1})}%`; }
+      function atualizarIndicadores() {
+        el('totalAlunos').textContent = formatarNumero(alunos.length);
+        el('totalTurmas').textContent = formatarNumero(listaTurmas().length);
+        el('totalDeclarados').textContent = formatarNumero(alunos.filter(a => a.cor !== 'nao_informar' && a.cor !== 'pendente').length);
+        el('totalPendentes').textContent = formatarNumero(alunos.filter(a => a.cor === 'pendente').length);
+      }
+      function atualizarLegenda(cont, total) {
+        const legenda = el('legenda');
+        legenda.replaceChildren();
+        for (const categoria of categorias.filter(c=>c.id!=='pendente')) {
+          const linha = document.createElement('div');
+          linha.className = `legend-item${cont[categoria.id] === 0 ? ' zero' : ''}`;
+          const dot = document.createElement('span');
+          dot.className = 'dot'; dot.style.background = categoria.cor;
+          const nome = document.createElement('span');
+          nome.className = 'legend-name'; nome.textContent = categoria.nome;
+          const numero = document.createElement('span');
+          numero.className = 'legend-value'; numero.textContent = formatarNumero(cont[categoria.id]);
+          const perc = document.createElement('small');
+          perc.textContent = `(${formatoPercentual(percentual(cont[categoria.id], total))})`;
+          numero.append(perc);
+          linha.append(dot, nome, numero);
+          legenda.append(linha);
+        }
+        const t = document.createElement('strong');
+        t.textContent = `${formatarNumero(total)} ${total === 1 ? 'estudante' : 'estudantes'}`;
+        const pendentes=filtradosPorTurma().filter(a=>a.cor==='pendente').length;
+        el('resumoGrafico').replaceChildren(document.createTextNode('Respostas analisadas: '),t,document.createTextNode(` • ${formatarNumero(pendentes)} pendente${pendentes===1?'':'s'}`));
+        el('salvarPngBtn').disabled = !total;
+      }
+      function desenharPizza(ctx, x, y, raio, cont, total, fonteTamanho = 20) {
+        if (!total) return;
+        let inicio = -Math.PI/2;
+        const presentes = categorias.filter(c => c.id !== 'pendente' && cont[c.id] > 0);
+        for (const categoria of presentes) {
+          const fatia = cont[categoria.id] / total * Math.PI * 2;
+          const fim = inicio + fatia;
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, raio, inicio, fim); ctx.closePath();
+          ctx.fillStyle = categoria.cor; ctx.fill();
+          ctx.lineWidth = Math.max(2, raio * .012); ctx.strokeStyle = '#fff'; ctx.stroke();
+          if (fatia >= 0.38) {
+            const meio = inicio + fatia/2;
+            const distancia = raio * .65;
+            const p = percentual(cont[categoria.id], total);
+            ctx.font = `800 ${fonteTamanho}px system-ui, sans-serif`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#fff'; ctx.shadowColor = '#101d3d80'; ctx.shadowBlur = 5;
+            ctx.fillText(formatoPercentual(p), x + Math.cos(meio)*distancia, y + Math.sin(meio)*distancia);
+            ctx.shadowBlur = 0;
+          }
+          inicio = fim;
+        }
+      }
+      function desenharCanvas() {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        const lado = 580;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+        canvas.width = Math.round(lado*dpr); canvas.height = Math.round(lado*dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+        ctx.clearRect(0,0,lado,lado);
+        const lista = filtradosPorTurma().filter(a=>a.cor!=='pendente');
+        if (!lista.length) {
+          ctx.beginPath(); ctx.arc(290,290,226,0,Math.PI*2);
+          ctx.fillStyle = '#f0f3f9'; ctx.fill();
+          ctx.setLineDash([8,11]); ctx.strokeStyle = '#d7e0ee'; ctx.lineWidth = 3; ctx.stroke(); ctx.setLineDash([]);
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#8390a4'; ctx.font = '700 22px system-ui';
+          ctx.fillText('Sem respostas',290,285);
+          ctx.font = '16px system-ui'; ctx.fillText('Registre as autodeclarações',290,316);
+        } else desenharPizza(ctx,290,290,247,contagens(lista),lista.length,22);
+        canvas.setAttribute('aria-label', `Distribuição de cor ou raça: ${lista.length} respostas registradas. ${categorias.filter(c=>c.id!=='pendente').map(c=>`${c.nome}: ${contagens(lista)[c.id]}`).join('; ')}`);
+      }
+      function atualizarGrafico() {
+        const lista = filtradosPorTurma().filter(a=>a.cor!=='pendente');
+        atualizarLegenda(contagens(lista), lista.length);
+        desenharCanvas();
+      }
+      function botaoAcao(texto, classe, titulo, executar) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = `icon-button ${classe || ''}`;
+        b.textContent = texto; b.setAttribute('aria-label', titulo);
+        b.addEventListener('click', executar);
+        return b;
+      }
+      function atualizarTabela() {
+        const tbody = el('tabelaAlunos');
+        tbody.replaceChildren();
+        const lista = filtradosPorTurma().filter(a => !busca || chaveTexto(`${a.nome} ${a.turma} ${porId[a.cor].nome}`).includes(chaveTexto(busca)))
+          .sort((a,b) => a.turma.localeCompare(b.turma,'pt-BR',{numeric:true}) || a.nome.localeCompare(b.nome,'pt-BR'));
+        if (!lista.length) {
+          const tr = document.createElement('tr'); const td = document.createElement('td');
+          td.colSpan = 4; td.className = 'empty-cell';
+          td.textContent = alunos.length ? 'Nenhum registro corresponde aos filtros.' : 'Nenhum estudante cadastrado ainda.';
+          tr.append(td); tbody.append(tr);
+        }
+        for (const a of lista) {
+          const tr = document.createElement('tr');
+          const nome = document.createElement('td'); nome.className = 'name-cell'; nome.textContent = a.nome;
+          const turma = document.createElement('td'); turma.textContent = a.turma;
+          const cor = document.createElement('td');
+          const pill = document.createElement('span'); pill.className = 'race-pill';
+          pill.style.setProperty('--race-color', porId[a.cor].cor); pill.textContent = porId[a.cor].nome;
+          cor.append(pill);
+          const acoes = document.createElement('td');
+          const row = document.createElement('div'); row.className = 'row-actions';
+          row.append(botaoAcao('Editar','',`Editar ${a.nome}`,() => editarAluno(a.id)));
+          row.append(botaoAcao('Excluir','delete',`Excluir ${a.nome}`,() => excluirAluno(a.id)));
+          acoes.append(row); tr.append(nome,turma,cor,acoes); tbody.append(tr);
+        }
+        el('contagemTabela').textContent = `${formatarNumero(lista.length)} ${lista.length === 1 ? 'registro exibido' : 'registros exibidos'} de ${formatarNumero(alunos.length)}`;
+        el('limparDadosBtn').disabled = alunos.length === 0;
+      }
+      function renderizar() { atualizarFiltros(); atualizarOpcoesCategoria(); atualizarIndicadores(); atualizarGrafico(); atualizarTabela(); }
+      function resetarFormulario() {
+        form.reset(); editando = null;
+        el('formTitle').textContent = 'Cadastrar estudante';
+        el('salvarBtn').textContent = '+ Adicionar estudante';
+        el('cancelarEdicao').classList.add('hide');
+      }
+      function editarAluno(id) {
+        const a = alunos.find(a=>a.id===id); if (!a) return;
+        editando = id; el('nome').value = a.nome; el('turma').value = a.turma; el('cor').value = a.cor;
+        el('formTitle').textContent = 'Editar estudante';
+        el('salvarBtn').textContent = '✓ Salvar alterações';
+        el('cancelarEdicao').classList.remove('hide');
+        form.scrollIntoView({ behavior: 'smooth', block:'center' }); el('nome').focus({preventScroll:true});
+      }
+      function excluirAluno(id) {
+        const a = alunos.find(a=>a.id===id); if (!a) return;
+        if (!confirm(`Excluir o registro de “${a.nome}” (${a.turma})?`)) return;
+        alunos = alunos.filter(a=>a.id!==id);
+        if (editando === id) resetarFormulario();
+        persistir(); renderizar(); aviso('Registro excluído.');
+      }
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        const nome = textoNormalizado(el('nome').value);
+        const turma = listaTurmas().find(t=>t===el('turma').value);
+        const cor = el('cor').value;
+        if (!nome || !turma || !Object.hasOwn(porId, cor)) return aviso('Preencha nome, escolha uma turma cadastrada e a autodeclaração.', true);
+        const duplicado = alunos.find(a => a.id !== editando && chaveTexto(a.nome) === chaveTexto(nome) && chaveTexto(a.turma) === chaveTexto(turma));
+        if (duplicado) return aviso('Este estudante já está cadastrado nesta turma. Use Editar para corrigir.',true);
+        if (editando) {
+          const index = alunos.findIndex(a=>a.id===editando);
+          if (index < 0) return aviso('Registro em edição não encontrado.', true);
+          alunos[index] = { ...alunos[index], nome,turma,cor };
+          aviso('Dados do estudante atualizados.');
+        } else {
+          alunos.push({id:novaId(),nome,turma,cor});
+          aviso('Estudante cadastrado com sucesso.');
+        }
+        persistir(); resetarFormulario(); renderizar(); el('nome').focus();
+      });
+      el('cancelarEdicao').addEventListener('click', resetarFormulario);
+      el('filtroTurma').addEventListener('change', e => { turmaSelecionada = e.target.value; atualizarGrafico(); atualizarTabela(); });
+      el('busca').addEventListener('input', e => { busca = e.target.value; atualizarTabela(); });
+
+      function baixarArquivo(blob, nome) {
+        const url = URL.createObjectURL(blob); const a = document.createElement('a');
+        a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 1000);
+      }
+      function dataArquivo() { return new Date().toISOString().slice(0,10); }
+      function nomeArquivoTurma(s) {
+        return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,40);
+      }
+      el('exportarJsonBtn').addEventListener('click', () => {
+        const dados = {
+          aplicativo:'Mini Censo Demográfico Escolar', versao:3, exportadoEm:new Date().toISOString(),
+          observacao:'Arquivo contém dados pessoais sensíveis. Não compartilhe publicamente.',
+          categorias:categorias.map(c=>({id:c.id,nome:c.nome,cor:c.cor})),
+          turmas:listaTurmas(),
+          alunos:alunos.map(a=>({id:a.id,nome:a.nome,turma:a.turma,cor:a.cor}))
+        };
+        baixarArquivo(new Blob([JSON.stringify(dados,null,2)],{type:'application/json;charset=utf-8'}),`mini_censo_escolar_${dataArquivo()}.json`);
+        aviso('Backup JSON exportado. Guarde-o em local seguro.');
+      });
+      el('importarJsonBtn').addEventListener('click', () => el('arquivoJson').click());
+      el('arquivoJson').addEventListener('change',async e=>{
+        const arquivo=e.target.files?.[0]; if (!arquivo) return;
+        e.target.value='';
+        if (arquivo.size>8*1024*1024) return aviso('O arquivo JSON é muito grande (limite: 8 MB).',true);
+        try {
+          const dado=JSON.parse(await arquivo.text());
+          const lista=Array.isArray(dado)?dado:dado?.alunos;
+          if (!Array.isArray(lista)) return aviso('O arquivo não contém uma lista de alunos válida.',true);
+          const categoriasImportadas=normalizarCategorias(dado?.categorias);
+          const mapaImportado=Object.fromEntries(categoriasImportadas.map(c=>[c.id,c]));
+          const importados=lista.map(r=>registroValido(r,mapaImportado));
+          if (importados.some(r=>!r)) return aviso('Importação cancelada: há registros incompletos ou categorias inválidas.',true);
+          // Em backups antigos, a lista de turmas é reconstruída a partir dos alunos.
+          const turmasImportadas=normalizarTurmas(dado?.turmas,importados);
+          const substituir=confirm(
+            `Arquivo válido: ${importados.length} registros, ${turmasImportadas.length} turmas e ${categoriasImportadas.length-CATEGORIAS_PADRAO.length} categorias personalizadas.\n\nOK: SUBSTITUIR alunos, turmas e categorias atuais pelos do arquivo.\nCancelar: continuar para MESCLAR, preservando os dados existentes.`
+          );
+          if (substituir && !confirm('CONFIRMA SUBSTITUIR TODOS os estudantes, turmas e categorias deste navegador? Exporte antes o backup atual, se necessário.')) return;
+          if (substituir) {
+            categorias=categoriasImportadas;
+            turmasCadastradas=turmasImportadas;
+            atualizarMapaCategorias();
+            const vistos=new Set(), ids=new Set();
+            alunos=importados.filter(a=>{
+              const chave=JSON.stringify([chaveTexto(a.nome),chaveTexto(a.turma)]);
+              if (vistos.has(chave)) return false;
+              vistos.add(chave); return true;
+            });
+            alunos.forEach(a=>{
+              while(ids.has(a.id)) a.id=novaId(); ids.add(a.id);
+              a.turma=turmasCadastradas.find(t=>chaveTexto(t)===chaveTexto(a.turma))||a.turma;
+            });
+            aviso(`${alunos.length} registros e ${turmasCadastradas.length} turmas importados (substituição).`);
+          } else {
+            turmasCadastradas=normalizarTurmas([...turmasCadastradas,...turmasImportadas],alunos);
+            const traducao=new Map();
+            for (const cat of categoriasImportadas) {
+              if (CATEGORIAS_PADRAO.some(p=>p.id===cat.id)) { traducao.set(cat.id,cat.id); continue; }
+              const existenteNome=categorias.find(c=>chaveTexto(c.nome)===chaveTexto(cat.nome));
+              if (existenteNome) { traducao.set(cat.id,existenteNome.id); continue; }
+              let id=cat.id;
+              while (Object.prototype.hasOwnProperty.call(porId,id)) id='custom_'+novaId().replace(/[^a-z0-9]/gi,'').slice(0,50).toLowerCase();
+              categorias.push({...cat,id}); porId[id]=categorias[categorias.length-1]; traducao.set(cat.id,id);
+            }
+            atualizarMapaCategorias();
+            const chaves=new Set(alunos.map(a=>JSON.stringify([chaveTexto(a.nome),chaveTexto(a.turma)])));
+            const ids=new Set(alunos.map(a=>a.id));
+            let novos=0;
+            for (const r of importados) {
+              const turmaCanonica=turmasCadastradas.find(t=>chaveTexto(t)===chaveTexto(r.turma))||r.turma;
+              const chave=JSON.stringify([chaveTexto(r.nome),chaveTexto(turmaCanonica)]);
+              if (chaves.has(chave)) continue;
+              chaves.add(chave);
+              while (ids.has(r.id)) r.id=novaId();
+              ids.add(r.id); alunos.push({...r,turma:turmaCanonica,cor:traducao.get(r.cor)||r.cor}); novos++;
+            }
+            aviso(`${novos} registros novos importados. ${importados.length-novos} repetidos ignorados.`);
+          }
+          resetarFormulario(); mostrarFormCategoria(false); mostrarFormTurma(false); persistir(); renderizar();
+        } catch (err) { aviso('Não foi possível ler este arquivo JSON.',true); }
+      });
+      el('limparDadosBtn').addEventListener('click', () => {
+        if (!alunos.length) return;
+        if (!confirm(`ATENÇÃO: excluir permanentemente os ${alunos.length} registros salvos neste navegador?\n\nExporte seu JSON antes, se quiser guardá-los.`)) return;
+        if (!confirm('Confirme novamente: apagar TODOS os registros?')) return;
+        alunos=[]; turmaSelecionada=''; busca=''; el('busca').value='';
+        resetarFormulario(); persistir(); renderizar(); aviso('Todos os registros foram excluídos.');
+      });
+      function exportarGraficoPng() {
+        const todos=filtradosPorTurma(),lista=todos.filter(a=>a.cor!=='pendente'),total=lista.length;
+        const pendentes=todos.length-total;
+        if (!total) return aviso('Ainda não há autodeclarações para gerar o gráfico.',true);
+        const cont=contagens(lista), presentes=categorias.filter(c=>cont[c.id]>0);
+        const w=1800, h=Math.max(1200,640+presentes.length*78);
+        const imagem=document.createElement('canvas'); imagem.width=w; imagem.height=h;
+        const ctx=imagem.getContext('2d');
+        if (!ctx) return aviso('O navegador não oferece suporte à exportação de gráficos.',true);
+        ctx.fillStyle='#f7f9fd'; ctx.fillRect(0,0,w,h);
+        ctx.fillStyle='#162d58'; ctx.fillRect(0,0,w,20);
+        ctx.fillStyle='#162d58'; ctx.font='800 68px system-ui, sans-serif';
+        ctx.textAlign='left'; ctx.fillText('Mini Censo Demográfico Escolar',100,120);
+        ctx.fillStyle='#5e6d85'; ctx.font='34px system-ui, sans-serif';
+        const nomeFiltro=turmaSelecionada?`Turma: ${turmaSelecionada}`:'Todas as turmas';
+        ctx.fillText(`Cor ou raça autodeclarada  •  ${nomeFiltro}`,100,185);
+        ctx.fillStyle='#fff'; ctx.shadowColor='#25395115'; ctx.shadowBlur=28;
+        ctx.fillRect(74,237,1652,h-375); ctx.shadowBlur=0;
+        desenharPizza(ctx,545,651,350,cont,total,36);
+        ctx.textAlign='left'; ctx.fillStyle='#162d58'; ctx.font='800 42px system-ui, sans-serif';
+        ctx.fillText('Distribuição das respostas',990,357);
+        let y=427;
+        for (const cat of presentes) {
+          ctx.beginPath(); ctx.fillStyle=cat.cor; ctx.roundRect(990,y-25,29,29,7); ctx.fill();
+          ctx.fillStyle='#273854'; ctx.font='29px system-ui, sans-serif';
+          let nome=cat.nome;
+          while (nome.length>1 && ctx.measureText(nome).width>335) nome=nome.slice(0,-1);
+          if (nome!==cat.nome) nome=nome.slice(0,-1)+'…';
+          ctx.fillText(nome,1040,y);
+          ctx.textAlign='right'; ctx.font='700 30px system-ui, sans-serif';
+          ctx.fillText(`${cont[cat.id]}  (${formatoPercentual(percentual(cont[cat.id],total))})`,1660,y);
+          ctx.textAlign='left'; y+=78;
+        }
+        const totalY=Math.max(1000,y+45);
+        ctx.fillStyle='#e8eff8'; ctx.fillRect(990,totalY-48,674,2);
+        ctx.fillStyle='#1a3156'; ctx.font='800 35px system-ui, sans-serif';
+        ctx.fillText(`Respostas: ${formatarNumero(total)} • Pendentes: ${formatarNumero(pendentes)}`,990,totalY);
+        ctx.fillStyle='#77859a'; ctx.font='26px system-ui, sans-serif';
+        ctx.fillText(`Gerado em ${new Date().toLocaleDateString('pt-BR')} • Dados agregados sem identificação individual`,100,h-61);
+        imagem.toBlob(blob=>{
+          if (!blob) return aviso('Falha ao gerar a imagem PNG.',true);
+          const turma=turmaSelecionada?`_${nomeArquivoTurma(turmaSelecionada)}`:'_todas_turmas';
+          baixarArquivo(blob,`grafico_censo_escolar${turma}_${dataArquivo()}.png`);
+          aviso('Gráfico de pizza salvo em PNG.');
+        },'image/png');
+      }
+      el('salvarPngBtn').addEventListener('click',exportarGraficoPng);
+      renderizar();
+    })();
+  </script>
+</body>
+</html>
